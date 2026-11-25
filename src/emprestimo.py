@@ -1,0 +1,10 @@
+def classificar_taxa(score):
+    if score < 0 or score > 1000:
+        raise ValueError("Score inválido")
+    if score < 300:
+        raise ValueError("Score insuficiente")
+    if score < 600:
+        return 0.045
+    if score < 800:
+        return 0.029
+    return 0.019
