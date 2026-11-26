@@ -73,11 +73,21 @@ Entradas inválidas lançam `ValueError` nas funções e viram **HTTP 400** na A
 | Método | Rota | Descrição | Respostas |
 | --- | --- | --- | --- |
 | GET | `/health` | Verifica se a API está no ar | 200 |
+| POST | `/emprestimos/classificar-taxa` | Retorna a taxa mensal em decimal para o score | 200 · 400 · 422 |
+| POST | `/emprestimos/validar` | Valida valor, prazo e idade do cliente | 200 · 400 · 422 |
+| POST | `/emprestimos/parcela-price` | Calcula a parcela fixa pela Tabela Price | 200 · 400 · 422 |
+| POST | `/emprestimos/custo-total` | Calcula total pago, juros e custo percentual | 200 · 400 · 422 |
+| POST | `/emprestimos/validar-margem` | Verifica se a parcela cabe em 30% da renda | 200 · 400 · 422 |
+| POST | `/parcelamentos` | Simula um parcelamento no cartão | 200 · 400 · 422 |
+
+Rotas de simulação completa planejadas:
+
+| Método | Rota | Descrição | Respostas |
+| --- | --- | --- | --- |
 | POST | `/simulacoes` | Cria uma simulação de empréstimo | 201 · 400 |
 | GET | `/simulacoes` | Lista as simulações | 200 |
 | GET | `/simulacoes/{id}` | Busca uma simulação pelo ID | 200 · 404 |
 | DELETE | `/simulacoes/{id}` | Remove uma simulação | 204 · 404 |
-| POST | `/parcelamentos` | Simula um parcelamento no cartão | 200 · 400 |
 
 Exemplo de requisição:
 
@@ -110,6 +120,36 @@ pip install -r requirements.txt
 
 # 3. Subir a API (documentação em http://127.0.0.1:8000/docs)
 uvicorn src.app:app --reload
+```
+
+### Consultar os cálculos com `curl`
+
+Com a API rodando, execute em outro terminal. Informe a taxa mensal em decimal (`0.02` para 2% ao mês) e o prazo inteiro em meses.
+
+```bash
+curl -X POST http://127.0.0.1:8000/emprestimos/classificar-taxa \
+  -H 'Content-Type: application/json' \
+  -d '{"score":650}'
+
+curl -X POST http://127.0.0.1:8000/emprestimos/validar \
+  -H 'Content-Type: application/json' \
+  -d '{"valor":10000,"prazo":24,"idade":30}'
+
+curl -X POST http://127.0.0.1:8000/emprestimos/parcela-price \
+  -H 'Content-Type: application/json' \
+  -d '{"valor":1000,"taxa":0.02,"prazo":12}'
+
+curl -X POST http://127.0.0.1:8000/emprestimos/custo-total \
+  -H 'Content-Type: application/json' \
+  -d '{"valor":10000,"parcela":584.13,"prazo":24}'
+
+curl -X POST http://127.0.0.1:8000/emprestimos/validar-margem \
+  -H 'Content-Type: application/json' \
+  -d '{"renda":4000,"parcela":584.13}'
+
+curl -X POST http://127.0.0.1:8000/parcelamentos \
+  -H 'Content-Type: application/json' \
+  -d '{"valor":900,"parcelas":3}'
 ```
 
 ## Como rodar os testes

@@ -1,3 +1,6 @@
+from decimal import Decimal
+
+
 def classificar_taxa(score: int) -> float:
     if isinstance(score, bool) or not isinstance(score, int):
         raise ValueError("Score inválido")
@@ -29,5 +32,16 @@ def validar_emprestimo(valor, prazo, idade):
 
     if idade + prazo / 12 > 80:
         raise ValueError("Prazo ultrapassa idade máxima")
+
+    return True
+
+
+def validar_margem(renda: float, parcela: float) -> bool:
+    """Valida se a parcela compromete no máximo 30% da renda mensal."""
+    if renda <= 0 or parcela <= 0:
+        raise ValueError("Renda e parcela devem ser maiores que zero")
+
+    if Decimal(str(parcela)) > Decimal(str(renda)) * Decimal("0.30"):
+        raise ValueError("Parcela ultrapassa 30% da renda mensal")
 
     return True
