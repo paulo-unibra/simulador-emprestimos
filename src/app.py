@@ -1,7 +1,10 @@
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, FiniteFloat, StrictInt
 
+from src.custos import calcular_custo_total, calcular_parcela_price
 from src.desconto import calcular_desconto, calcular_frete
+from src.emprestimo import classificar_taxa, validar_emprestimo, validar_margem
+from src.parcelamento import simular_parcelamento
 
 app = FastAPI(title="BaseProject - Curso Testes e CI (UNIBRA)")
 
@@ -14,9 +17,90 @@ class PedidoInput(BaseModel):
     distancia_km: float = 0.0
 
 
+class ParcelaPriceInput(BaseModel):
+    valor: FiniteFloat
+    taxa: FiniteFloat
+    prazo: int
+
+
+class CustoTotalInput(BaseModel):
+    valor: FiniteFloat
+    parcela: FiniteFloat
+    prazo: int
+
+
+class ClassificarTaxaInput(BaseModel):
+    score: StrictInt
+
+
+class ValidarEmprestimoInput(BaseModel):
+    valor: FiniteFloat
+    prazo: StrictInt
+    idade: StrictInt
+
+
+class ValidarMargemInput(BaseModel):
+    renda: FiniteFloat
+    parcela: FiniteFloat
+
+
+class ParcelamentoInput(BaseModel):
+    valor: FiniteFloat
+    parcelas: StrictInt
+
+
 @app.get("/health")
 def health_check():
     return {"status": "ok"}
+
+
+@app.post("/emprestimos/parcela-price")
+def consultar_parcela_price(dados: ParcelaPriceInput):
+    try:
+        parcela = calcular_parcela_price(dados.valor, dados.taxa, dados.prazo)
+    except ValueError as err:
+        raise HTTPException(status_code=400, detail=str(err)) from err
+    return {"parcela": parcela}
+
+
+@app.post("/emprestimos/custo-total")
+def consultar_custo_total(dados: CustoTotalInput):
+    try:
+        return calcular_custo_total(dados.valor, dados.parcela, dados.prazo)
+    except ValueError as err:
+        raise HTTPException(status_code=400, detail=str(err)) from err
+
+
+@app.post("/emprestimos/classificar-taxa")
+def consultar_taxa(dados: ClassificarTaxaInput):
+    try:
+        return {"taxa": classificar_taxa(dados.score)}
+    except ValueError as err:
+        raise HTTPException(status_code=400, detail=str(err)) from err
+
+
+@app.post("/emprestimos/validar")
+def consultar_validade_emprestimo(dados: ValidarEmprestimoInput):
+    try:
+        return {"valido": validar_emprestimo(dados.valor, dados.prazo, dados.idade)}
+    except ValueError as err:
+        raise HTTPException(status_code=400, detail=str(err)) from err
+
+
+@app.post("/emprestimos/validar-margem")
+def consultar_margem(dados: ValidarMargemInput):
+    try:
+        return {"valido": validar_margem(dados.renda, dados.parcela)}
+    except ValueError as err:
+        raise HTTPException(status_code=400, detail=str(err)) from err
+
+
+@app.post("/parcelamentos")
+def consultar_parcelamento(dados: ParcelamentoInput):
+    try:
+        return simular_parcelamento(dados.valor, dados.parcelas)
+    except ValueError as err:
+        raise HTTPException(status_code=400, detail=str(err)) from err
 
 
 @app.post("/pedidos", status_code=201)
