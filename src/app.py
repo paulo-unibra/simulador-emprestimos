@@ -1,3 +1,5 @@
+from threading import Lock
+
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, FiniteFloat, StrictInt
 
@@ -9,6 +11,8 @@ from src.parcelamento import simular_parcelamento
 app = FastAPI(title="BaseProject - Curso Testes e CI (UNIBRA)")
 
 PEDIDOS_DB: list[dict] = []
+simulacoes: list[dict] = []
+_simulacoes_lock = Lock()
 
 
 class PedidoInput(BaseModel):
@@ -47,6 +51,14 @@ class ValidarMargemInput(BaseModel):
 class ParcelamentoInput(BaseModel):
     valor: FiniteFloat
     parcelas: StrictInt
+
+
+class SimulacaoInput(BaseModel):
+    valor: FiniteFloat
+    prazo: StrictInt
+    idade: StrictInt
+    renda: FiniteFloat
+    score: StrictInt
 
 
 @app.get("/health")
@@ -101,6 +113,36 @@ def consultar_parcelamento(dados: ParcelamentoInput):
         return simular_parcelamento(dados.valor, dados.parcelas)
     except ValueError as err:
         raise HTTPException(status_code=400, detail=str(err)) from err
+
+
+@app.post("/simulacoes", status_code=201)
+def criar_simulacao(dados: SimulacaoInput):
+    try:
+        validar_emprestimo(dados.valor, dados.prazo, dados.idade)
+        taxa = classificar_taxa(dados.score)
+        parcela = calcular_parcela_price(dados.valor, taxa, dados.prazo)
+        validar_margem(dados.renda, parcela)
+        custo = calcular_custo_total(dados.valor, parcela, dados.prazo)
+    except ValueError as err:
+        raise HTTPException(status_code=400, detail=str(err)) from err
+
+    with _simulacoes_lock:
+        nova_simulacao = {
+            "id": len(simulacoes) + 1,
+            "taxa": taxa,
+            "parcela": parcela,
+            "total_pago": custo["total_pago"],
+            "juros": custo["total_juros"],
+            "custo_percentual": custo["custo_percentual"],
+        }
+        simulacoes.append(nova_simulacao)
+    return nova_simulacao
+
+
+@app.get("/simulacoes")
+def listar_simulacoes():
+    with _simulacoes_lock:
+        return simulacoes.copy()
 
 
 @app.post("/pedidos", status_code=201)

@@ -44,7 +44,8 @@ simulador-emprestimos/
 │   │   ├── test_parcelamento.py
 │   │   └── test_desconto.py          # exemplo original do BaseProject
 │   └── integration/
-│       └── test_api_pedidos.py       # testes de API com TestClient
+│       ├── test_api_pedidos.py       # testes das rotas individuais
+│       └── test_api_simulacoes.py    # testes de criação e listagem de simulações
 ├── pytest.ini                        # pythonpath = .
 ├── requirements.txt
 └── README.md
@@ -86,10 +87,22 @@ Entradas que quebram uma regra lançam `ValueError` nas funções e viram **HTTP
 | POST | `/emprestimos/custo-total` | 4 | `{"valor": 10000, "parcela": 584.13, "prazo": 24}` | 200 · 400 · 422 |
 | POST | `/emprestimos/validar-margem` | 5 | `{"renda": 4000, "parcela": 584.13}` | 200 · 400 · 422 |
 | POST | `/parcelamentos` | 6 | `{"valor": 1200, "parcelas": 4}` | 200 · 400 · 422 |
+| POST | `/simulacoes` | 1 a 5 | `{"valor": 10000, "prazo": 24, "idade": 30, "renda": 4000, "score": 650}` | 201 · 400 · 422 |
+| GET | `/simulacoes` | — | — | 200 |
 
 As rotas `POST /pedidos` e `GET /pedidos` são o exemplo original do BaseProject e foram mantidas como referência.
 
 ### Exemplo: simulando um empréstimo de R$ 10.000 em 24x com score 650
+
+O `POST /simulacoes` executa o fluxo completo em uma requisição. Para o corpo da tabela acima, a primeira simulação retorna `201` com:
+
+```json
+{"id": 1, "taxa": 0.029, "parcela": 584.13, "total_pago": 14019.12, "juros": 4019.12, "custo_percentual": 40.19}
+```
+
+O `GET /simulacoes` lista os resultados salvos em memória, na ordem de criação, ou retorna `[]` se não houver simulações. Reiniciar a aplicação limpa o histórico.
+
+Também é possível executar cada passo separadamente:
 
 | Passo | Rota | Resposta |
 | --- | --- | --- |
