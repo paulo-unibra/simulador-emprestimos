@@ -1,7 +1,10 @@
 from decimal import Decimal
 
 
-def classificar_taxa(score):
+def classificar_taxa(score: int) -> float:
+    if isinstance(score, bool) or not isinstance(score, int):
+        raise ValueError("Score inválido")
+
     if score < 0 or score > 1000:
         raise ValueError("Score inválido")
 
@@ -18,7 +21,6 @@ def classificar_taxa(score):
 
 
 def validar_emprestimo(valor, prazo, idade):
-
     if valor < 500 or valor > 50000:
         raise ValueError("Valor fora do limite permitido")
 
