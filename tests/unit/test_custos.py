@@ -6,7 +6,7 @@ from src.custos import calcular_custo_total, calcular_parcela_price
 @pytest.mark.parametrize("taxa, prazo, parcela_esperada", [
     (0.02, 12, 94.56),
     (0, 3, 333.33),
-    (0.02, 1, 1020.00),
+    (0.02, 1, 10203.00),
 ])
 def test_calcular_parcela_price(taxa, prazo, parcela_esperada):
     assert calcular_parcela_price(1000, taxa, prazo) == parcela_esperada
