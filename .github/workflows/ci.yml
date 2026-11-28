@@ -25,13 +25,7 @@ jobs:
 
       - name: Executar testes unitários
         run: |
-          python -m pytest tests/unit -v --cov=src --cov-report=html
-
-      - name: Publicar relatório de cobertura
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage-report
-          path: htmlcov/
+          python -m pytest tests/unit -v
 
   integration-tests:
     runs-on: ubuntu-latest
@@ -50,8 +44,15 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install pytest
+          pip install pytest pytest-cov
 
       - name: Executar testes de integração
         run: |
-          python -m pytest tests/integration -v
+          python -m pytest tests/integration -v --cov=src --cov-report=html --cov-report=term-missing --cov-fail-under=80
+
+      - name: Publicar relatório de cobertura
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: htmlcov/
